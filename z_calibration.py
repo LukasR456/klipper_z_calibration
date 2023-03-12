@@ -323,20 +323,25 @@ class CalibrationState:
         self.gcode_move.cmd_SET_GCODE_OFFSET(gcmd_offset)
     def calibrate_z(self):
         self.helper.start_gcode.run_gcode_from_command()
-        # probe the nozzle
-        nozzle_zero = self._probe_on_site(self.z_endstop,
-                                          self.helper.nozzle_site)
-        # probe the probe-switch
         self.helper.switch_gcode.run_gcode_from_command()
+
         # probe the body of the switch
         switch_zero = self._probe_on_site(self.z_endstop,
                                           self.helper.switch_site,
                                           True)
+
         # probe position on bed
         probe_site = self._add_probe_offset(self.helper.bed_site)
         probe_zero = self._probe_on_site(self.probe.mcu_probe,
                                          probe_site,
                                          True)
+
+        self.helper.end_gcode.run_gcode_from_command()
+        
+        # probe the nozzle
+        nozzle_zero = self._probe_on_site(self.z_endstop,
+                                          self.helper.nozzle_site)
+        
         # calculate the offset
         offset = probe_zero - (switch_zero - nozzle_zero
                                + self.helper.switch_offset)
@@ -358,6 +363,5 @@ class CalibrationState:
         # set states
         self.helper.last_state = True
         self.helper.last_z_offset = offset
-        self.helper.end_gcode.run_gcode_from_command()
 def load_config(config):
     return ZCalibrationHelper(config)
